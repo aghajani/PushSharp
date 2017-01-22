@@ -6,6 +6,9 @@ namespace PushSharp.Google
     {
         private const string GCM_SEND_URL = "https://gcm-http.googleapis.com/gcm/send";
 
+        public const string GCM_TOPIC_BATCHADD_URL = "https://iid.googleapis.com/iid/v1:batchAdd";
+        public const string GCM_TOPIC_BATCHREMOVE_URL = "https://iid.googleapis.com/iid/v1:batchRemove";
+
         public GcmConfiguration (string senderAuthToken)
         {
             this.SenderAuthToken = senderAuthToken;

@@ -8,6 +8,7 @@ using PushSharp.Core;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace PushSharp.Google
 {
@@ -49,7 +50,8 @@ namespace PushSharp.Google
 
         readonly HttpClient http;
 
-        public async Task Send (GcmNotification notification)
+        public async Task Send(GcmNotification notification) { await Send(notification, null); }
+        public async Task Send (GcmNotification notification, Action<string> logger = null)
         {
             var json = notification.GetJson ();
 
@@ -57,10 +59,47 @@ namespace PushSharp.Google
 
             var response = await http.PostAsync (Configuration.GcmUrl, content);
 
+            if (logger != null)
+            {
+                try
+                {
+                    logger(await response.Content.ReadAsStringAsync());
+                }
+                catch (Exception ex1)
+                {
+                    logger(ex1.ToString());
+                }
+            }
+
             if (response.IsSuccessStatusCode) {
                 await processResponseOk (response, notification).ConfigureAwait (false);
             } else {
                 await processResponseError (response, notification).ConfigureAwait (false);
+            }
+        }
+
+        public async Task TopicRegister(List<string> iid_Tokens, List<string> topics, Action<string> logger = null)
+        {
+            foreach (var feTopic in topics)
+            {
+                var body = new
+                {
+                    registration_tokens = iid_Tokens.ToArray(),
+                    to = string.Format("/topics/{0}", feTopic),
+                };
+                var json = JsonConvert.SerializeObject(body);
+
+                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                var response = await http.PostAsync(GcmConfiguration.GCM_TOPIC_BATCHADD_URL, content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                if (logger != null)
+                {
+                    if (response.IsSuccessStatusCode)
+                        logger($"Topic registered: {feTopic}, ResponseContent: {responseContent}");
+                    else
+                        logger($"Topic failed to register: {feTopic}, Response: {response.ReasonPhrase}, ResponseContent: {responseContent}");
+                }
             }
         }
 

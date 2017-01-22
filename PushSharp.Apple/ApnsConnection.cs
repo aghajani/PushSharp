@@ -187,7 +187,9 @@ namespace PushSharp.Apple
             // Add all the frame data
             foreach (var n in toSend)
                 batchData.AddRange (n.Notification.ToBytes ());
-            
+
+            Log.Info("APNS-Client[{0}]: Sending Batch ID={1}, BatchData Byte Count={2}", id, batchId, batchData.Count);
+
             return batchData.ToArray ();
         }
 
